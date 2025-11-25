@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>dl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #121212;
+      --fg: #f0f0f0;
+      --accent: #f57c00;
+      --card-bg: #1e1e1e;
+      --border: #333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* 星空 canvas */
+    #starfield {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1; /* 在最底层 */
+      pointer-events: none; /* 不阻挡点击 */
+    }
+
+    /* 左侧座右铭栏 */
+    .motto-sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      width: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 14px;
+      color: #555;
+      z-index: 10;
+    }
+
+    .motto-text {
+      letter-spacing: 4px;
+      text-align: center;
+      padding: 10px 0;
+      border-right: 1px solid var(--border);
+      transition: color 0.3s;
+    }
+
+    .motto-text:hover {
+      color: var(--accent);
+    }
+
+    .main-wrapper {
+      flex: 1;
+      margin-left: 40px;
+    }
+
+    header {
+      padding: 2rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 20;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    nav a, #lang-toggle {
+      color: var(--fg);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+
+    nav a:hover, #lang-toggle:hover {
+      color: var(--accent);
+    }
+
+    main {
+      max-width: 720px;
+      margin: 3rem auto;
+      padding: 0 5%;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(90deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p[data-key="tagline"] {
+      font-size: 1.1rem;
+      color: #aaa;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .posts {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .post-card {
+      background: var(--card-bg);
+      padding: 1.8rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: transform 0.3s, border-color 0.3s;
+      position: relative;
+      z-index: 5;
+    }
+
+    .post-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 5%;
+      color: #777;
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+      margin-top: 4rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .counter {
+      margin-top: 0.5rem;
+      color: #888;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      .motto-sidebar { display: none; }
+      .main-wrapper { margin-left: 0; }
+      /* 移动端可选择关闭星空以提升性能 */
+      #starfield { display: none; }
+    }
+
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      nav { gap: 0.8rem; }
+      .hero h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 星空背景 -->
+  <canvas id="starfield"></canvas>
+
+  <!-- 左侧座右铭 -->
+  <div class="motto-sidebar">
+    <div class="motto-text">纵有疾风起，人生不言弃</div>
+  </div>
+
+  <div class="main-wrapper">
+    <header>
+      <a href="/" class="logo" data-en="dl">dl</a>
+      <nav>
+        <a href="#posts" data-key="nav.posts" data-en="Posts">文章</a>
+        <a href="#about" data-key="nav.about" data-en="About">关于</a>
+        <a href="#contact" data-key="nav.contact" data-en="Contact">联系</a>
+        <span id="lang-toggle" data-key="lang.toggle" data-en="中文">EN</span>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>dl</h1>
+        <p data-key="tagline" data-en="Recording thoughts · Sharing creations · Exploring the edge of the digital world">
+          记录思考 · 分享创造 · 探索数字世界的边界
+        </p>
+      </section>
+
+      <section id="posts" class="posts">
+        <article class="post-card">
+          <h2 data-key="post1.title" data-en="Why I Chose to Return to Writing">为什么我选择回归写作</h2>
+          <p data-key="post1.desc" data-en="In this age of information overload, deep thinking has become rare. This post shares my original intention for restarting this blog.">
+            在这个信息爆炸的时代，深度思考反而成了稀缺品。本文分享我重启博客的初心。
+          </p>
+          <div class="post-meta" data-key="post1.meta" data-en="Nov 20, 2025 · Essay">2025年11月20日 · 随笔</div>
+        </article>
+        <article class="post-card">
+          <h2 data-key="post2.title" data-en="Building My Own Digital Garden">构建属于自己的数字花园</h2>
+          <p data-key="post2.desc" data-en="A personal blog is not just a content container, but a sanctuary for ideas. How to build one from scratch?">
+            一个独立博客不仅是内容载体，更是思想的栖息地。如何从零开始打造？
+          </p>
+          <div class="post-meta" data-key="post2.meta" data-en="Nov 15, 2025 · Tech">2025年11月15日 · 技术</div>
+        </article>
+        <article class="post-card">
+          <h2 data-key="post3.title" data-en="Minimalism and Productive Living">极简主义与高效生活</h2>
+          <p data-key="post3.desc" data-en="Less is more. My reflections on practicing minimalism in work and life.">
+            少即是多。我在工作与生活中实践极简原则的经验总结。
+          </p>
+          <div class="post-meta" data-key="post3.meta" data-en="Nov 10, 2025 · Life">2025年11月10日 · 生活</div>
+        </article>
+      </section>
+
+      <section id="about" style="margin-top: 3rem;">
+        <h2 style="font-size: 1.6rem; margin-bottom: 1rem;" data-key="about.title" data-en="About dl">关于 dl</h2>
+        <p data-key="about.content" data-en="Hi, I'm DL, a digital nomad, indie developer, and lifelong learner. I believe technology should serve humanity, and writing is an extension of thinking. This is where I share insights, projects, and inspirations.">
+          你好，我是 DL，一名数字游民、独立开发者与终身学习者。  
+          我相信技术应服务于人性，写作是思考的延伸。  
+          这里是我分享见解、项目与灵感的地方。
+        </p>
+      </section>
+
+      <section id="contact" style="margin-top: 2rem;">
+        <h2 style="font-size: 1.6rem; margin-bottom: 1rem;" data-key="contact.title" data-en="Get in Touch">保持联系</h2>
+        <p data-key="contact.desc" data-en="Feel free to reach out via email or social media:">欢迎通过邮箱或社交平台与我交流：</p>
+        <p style="margin-top: 0.5rem;">
+          📧 <a href="mailto:2296649254@qq.com" style="color: var(--accent); text-decoration: none;">2296649254@qq.com</a>
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" style="color: #999; font-size: 0.85rem;" data-key="icp" data-en="Beian No. Jing ICP 12345678-1">
+          京ICP备12345678号-1
+        </a>
+      </p>
+      <p class="counter">
+        <span id="visit-text" data-key="counter.text" data-en="This site has been running for ">本站已运行 </span>
+        <span id="busuanzi_value_site_uv"></span> 
+        <span data-key="counter.days" data-en=" days, with total visits: "> 天，总访问量 </span>
+        <span id="busuanzi_value_site_pv"></span> 
+        <span data-key="counter.times" data-en=" times"> 次</span>
+      </p>
+      <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    </footer>
+  </div>
+
+  <!-- ✨ 增强版动态星空脚本（带视差、漂移、闪烁） -->
+  <script>
+    (function() {
+      const canvas = document.getElementById('starfield');
+      const ctx = canvas.getContext('2d');
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      const isMobile = window.innerWidth <= 768;
+      const starCount = isMobile ? 150 : 500;
+
+      class Star {
+        constructor() {
+          this.reset();
+          this.depth = Math.random(); // 0 (far) ~ 1 (near)
+        }
+
+        reset() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          // 水平速度：左右缓慢飘动
+          this.vx = (Math.random() - 0.5) * 0.2;
+          // 垂直速度：缓慢下落
+          this.vy = Math.random() * 0.15 + 0.02;
+        }
+
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+
+          // 循环边界：从顶部重新进入，左右环绕
+          if (this.y > canvas.height + 10) this.y = -10;
+          if (this.x > canvas.width + 10) this.x = -10;
+          if (this.x < -10) this.x = canvas.width + 10;
+        }
+
+        draw(time) {
+          const size = 0.3 + this.depth * 1.4; // 近大远小
+          const baseOpacity = 0.2 + this.depth * 0.8; // 近亮远暗
+          // 随机频率闪烁，避免同步
+          const twinkle = Math.sin(time * (0.8 + this.depth * 1.5)) * 0.25;
+          const opacity = Math.max(0, Math.min(1, baseOpacity + twinkle));
+
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+          ctx.fill();
+        }
+      }
+
+      const stars = Array.from({ length: starCount }, () => new Star());
+      let time = 0;
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        time += 0.016; // ~60fps
+
+        stars.forEach(star => {
+          star.update();
+          star.draw(time);
+        });
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    })();
+  </script>
+
+  <!-- 语言切换脚本（完全保留） -->
+  <script>
+    let currentLang = localStorage.getItem('dl-lang') || 'zh';
+    const toggleBtn = document.getElementById('lang-toggle');
+    const htmlRoot = document.getElementById('html-root');
+
+    function translatePage(lang) {
+      currentLang = lang;
+      localStorage.setItem('dl-lang', lang);
+      htmlRoot.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+
+      document.querySelectorAll('[data-key]').forEach(el => {
+        if (lang === 'en') {
+          el.textContent = el.dataset.en;
+        } else {
+          if (!el.dataset.zh) el.dataset.zh = el.textContent;
+          el.textContent = el.dataset.zh;
+        }
+      });
+
+      toggleBtn.textContent = lang === 'en' ? '中文' : 'EN';
+    }
+
+    document.querySelectorAll('[data-key]').forEach(el => {
+      if (!el.dataset.zh) el.dataset.zh = el.textContent;
+    });
+
+    toggleBtn.addEventListener('click', () => {
+      translatePage(currentLang === 'en' ? 'zh' : 'en');
+    });
+
+    if (currentLang === 'en') {
+      translatePage('en');
+    }
+  </script>
+</body>
+</html>
